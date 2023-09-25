@@ -1,0 +1,5 @@
+# Most of Node's object - like HTTP requests, responses, and streams - implement the EventEmitter module so they can provide a way to emit and listen a events.
+
+const EventEmitter = require('events);
+
+The simplest form of the event-driven nature is the callback style of some of the popular node.js functions - for example

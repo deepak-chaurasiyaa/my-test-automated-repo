@@ -20,10 +20,9 @@ const currentDir = dirname(currentFilePath);
 // Now, you can use currentDir in your path.join call
 const repoPath = path.join(currentDir, repoName);
 
-
 async function createGitHubRepoAndAddCommitPush() {
   try {
-    console.log({first:env.githubToken})
+    console.log({ first: env.githubToken });
     const octokit = new Octokit({
       auth: env.githubToken,
       request: {
@@ -89,6 +88,14 @@ async function createGitHubRepoAndAddCommitPush() {
       // If the remote "origin" exists, update its URL
       const remoteUrl = `https://github.com/${env.githubUserName}/${repoName}.git`;
       await git.removeRemote('origin');
+      await git.addRemote('origin', remoteUrl);
+    }
+    // Check if the remote "origin" already exists
+    const remoteExistss = await git.checkRemote('origin');
+
+    if (!remoteExistss) {
+      // If the remote "origin" doesn't exist, add it
+      const remoteUrl = `https://github.com/${env.githubUserName}/${repoName}.git`;
       await git.addRemote('origin', remoteUrl);
     }
 

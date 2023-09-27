@@ -6,8 +6,13 @@ import { Octokit } from '@octokit/rest';
 import { promises as fs } from 'fs';
 import path from 'path';
 import env from './config.js'; // Adjust the path to your config file if needed
+import dotenv from 'dotenv'; // Import dotenv package
+
+// Load environment variables from .env file
+dotenv.config();
 
 const repoName = 'my-test-automated-repo';
+
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -22,7 +27,6 @@ const repoPath = path.join(currentDir, repoName);
 
 async function createGitHubRepoAndAddCommitPush() {
   try {
-    console.log({ first: env.githubToken });
     const octokit = new Octokit({
       auth: env.githubToken,
       request: {
@@ -36,9 +40,7 @@ async function createGitHubRepoAndAddCommitPush() {
       repo: repoName,
     });
 
-    if (repoData) {
-      console.log(`GitHub repository '${repoName}' already exists.`);
-    } else {
+    if (!repoData) {
       // Create the GitHub repository if it doesn't exist
       await octokit.repos.createForAuthenticatedUser({
         name: repoName,
@@ -48,56 +50,20 @@ async function createGitHubRepoAndAddCommitPush() {
       console.log(`GitHub repository '${repoName}' created.`);
     }
 
-    // Check if the directory already exists
-    let directoryExists = true;
-    try {
-      await fs.access(repoPath);
-    } catch (err) {
-      // Directory does not exist, create it
-      await fs.mkdir(repoPath);
-      directoryExists = false;
-    }
-
-    if (directoryExists) {
-      console.log(`Directory '${repoName}' already exists.`);
-    } else {
-      console.log(`Directory '${repoName}' created.`);
-    }
-
     // Initialize a new Git repository if it doesn't exist
-    if (!directoryExists) {
-      await simpleGit().init(); // Initialize Git in the current directory
+    if (!(await fs.stat(repoPath).catch(() => false))) {
+      await simpleGit().init({ dir: repoPath }); // Initialize Git in the repoPath directory
+      console.log(`Directory '${repoName}' created and Git initialized.`);
     }
 
     // Create or modify a file (for demonstration)
-    await fs.writeFile(path.join(repoPath, 'example.txt'), 'Hello, GitHub!');
+    await fs.writeFile(path.join(repoPath, 'example.txt'), `Hello, GitHub! ${new Date()}`);
 
     // Add and commit changes
-    const git = simpleGit();
-    await git.add('./*');
-    await git.commit('Daily commit');
+    const git = simpleGit(repoPath);
 
-    // Check if the remote "origin" already exists
-    const remoteExists = await git.checkIsRepo('isRepo', 'origin');
-
-    if (!remoteExists) {
-      // If the remote "origin" doesn't exist, add it
-      const remoteUrl = `https://github.com/${env.githubUserName}/${repoName}.git`;
-      await git.addRemote('origin', remoteUrl);
-    } else {
-      // If the remote "origin" exists, update its URL
-      const remoteUrl = `https://github.com/${env.githubUserName}/${repoName}.git`;
-      await git.removeRemote('origin');
-      await git.addRemote('origin', remoteUrl);
-    }
-    // Check if the remote "origin" already exists
-    const remoteExistss = await git.checkRemote('origin');
-
-    if (!remoteExistss) {
-      // If the remote "origin" doesn't exist, add it
-      const remoteUrl = `https://github.com/${env.githubUserName}/${repoName}.git`;
-      await git.addRemote('origin', remoteUrl);
-    }
+    await git.add('../*');
+    await git.commit(`Commit at ${new Date()}`); // Use a dynamic commit message
 
     // Push changes to GitHub
     await git.push(['-u', 'origin', 'main']); // Assuming you want to push to the 'main' branch
@@ -106,6 +72,12 @@ async function createGitHubRepoAndAddCommitPush() {
   } catch (error) {
     console.error('Error:', error);
   }
-}
+} 
 
-createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+await createGitHubRepoAndAddCommitPush();
+
